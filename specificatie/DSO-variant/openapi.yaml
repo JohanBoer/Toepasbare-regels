@@ -1,0 +1,627 @@
+openapi: "3.0.0"
+info:
+  title: "Toepasbare regels"
+  version: 0.0.9
+  description: "De Omgevingsdocumenten Opvragen API ontsluit alle door bevoegde gezagen via de Landelijke Voorziening Bekendmaken en Beschikbaarstellen (LVBB) beschikbaar gestelde omgevingsdocumenten.
+                  Op de Ontwikkel  Test  Acceptatie en Pre-productieomgeving worden ook omgevingsdocumenten toegevoegd en verwijderd door beheerders voor testdoeleinden binnen en buiten de voorziening.
+                  De Omgevingsdocumenten Opvragen API volgt de standaarden zoals beschreven in de DSO API-strategie versie 1.1. Zo is het standaard mediatype HAL (`application/hal+json`).
+                  Dit is een mediatype voor het weergeven van resources en hun relaties via hyperlinks."
+servers:
+  - url: "https://service.pre.omgevingswet.overheid.nl/publiek/omgevingsdocumenten/api/opvragen/v4"
+  - url: "http://service.pre.omgevingswet.overheid.nl/publiek/omgevingsdocumenten/api/opvragen/v4"
+tags:
+  - name: "Activiteiten"
+    description: "Activiteiten bevat activiteit uitspraken die in omgevingsdocumenten staan."
+  - name: "Regelteksten"
+    description: "Regelteksten bevatten JuridischeRegels die beschreven zijn in omgevingsdocumenten."
+  - name: "Locaties"
+    description: "Locaties zijn algemene aanduidingen van of Geometrieën of Locatiegroepen."
+paths:
+  /activiteiten:
+    get:
+      summary: "Alle activiteiten opvragen"
+      parameters:
+        - name: "naam"
+          in: "query"
+          required: false
+          style: "form"
+          explode: false
+          schema:
+            type: "array"
+            items:
+              type: "string"
+        - name: "groep"
+          in: "query"
+          required: false
+          style: "form"
+          explode: false
+          schema:
+            type: "array"
+            items:
+              type: "string"
+      operationId: "getActiviteiten"
+      responses:
+        200:
+          description: "Activiteiten"
+          content:
+            application/hal+json:
+              schema:
+                required:
+                  - "_embedded"
+                  - "_links"
+                  - "page"
+                type: "object"
+                properties:
+                  _embedded:
+                    required:
+                      - activiteiten
+                    type: "object"
+                    properties:
+                      activiteiten:
+                        type: "array"
+                        items:
+                          $ref: "#/components/schemas/Activiteit"
+                  _links:
+                    $ref: "#/components/schemas/HalPaginationLinks"
+                  page:
+                    $ref: "#/components/schemas/Page"
+          headers:
+            X-Total-Count:
+              $ref: "#/components/headers/X-Total-Count"
+            X-Pagination-Count:
+              $ref: "#/components/headers/X-Pagination-Count"
+            X-Pagination-Page:
+              $ref: "#/components/headers/X-Pagination-Page"
+            X-Pagination-Limit:
+              $ref: "#/components/headers/X-Pagination-Limit"
+        default:
+          description: "Onverwacht probleem"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+      tags:
+        - Activiteiten
+
+  /activiteiten/{identificatie}:
+    get:
+      tags:
+        - Activiteiten
+      summary: "Een enkele activiteit opvragen"
+      operationId: "getActiviteit"
+      parameters:
+        - name: "identificatie"
+          in: "path"
+          required: true
+          style: "simple"
+          explode: false
+          schema:
+            type: "string"
+          example: "nl.imow-gm0000.activiteit.test"
+      responses:
+        200:
+          description: "Activiteit"
+          content:
+            application/hal+json:
+              schema:
+                $ref: "#/components/schemas/Activiteit"
+        404:
+          $ref: "#/components/responses/NotFound"
+        default:
+          description: "Onverwacht probleem"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+
+  /activiteiten/{identificatie}/regelteksten:
+    get:
+      tags:
+        - "Activiteiten"
+        - "Regelteksten"
+      summary: "Regelteksten ophalen die deze activiteit beschrijven"
+      operationId: "getActiviteitRegelteksten"
+      parameters:
+        - name: "identificatie"
+          in: "path"
+          required: true
+          style: "simple"
+          explode: false
+          schema:
+            type: "string"
+            example: "nl.imow-gm0000.activiteit.test"
+      responses:
+        200:
+          description: "Regelteksten"
+          content:
+            application/hal+json:
+              schema:
+                required:
+                - "_embedded"
+                - "_links"
+                - "page"
+                type: "object"
+                properties:
+                  _embedded:
+                    required:
+                      - "regelteksten"
+                    type: "object"
+                    properties:
+                      regelteksten:
+                        type: "array"
+                        items:
+                          $ref: "#/components/schemas/Regeltekst"
+                  _links:
+                    $ref: "#/components/schemas/HalPaginationLinks"
+                  page:
+                    $ref: "#/components/schemas/Page"
+          headers:
+            X-Total-Count:
+              $ref: "#/components/headers/X-Total-Count"
+            X-Pagination-Count:
+              $ref: "#/components/headers/X-Pagination-Count"
+            X-Pagination-Page:
+              $ref: "#/components/headers/X-Pagination-Page"
+            X-Pagination-Limit:
+              $ref: "#/components/headers/X-Pagination-Limit"
+        default:
+          description: "Onverwacht probleem"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+
+  /locaties/{identificatie}/activiteiten:
+    get:
+      tags:
+        - "Locaties"
+        - "Activiteiten"
+      summary: "Activiteiten opvragen waarvoor deze locatie geldt"
+      operationId: "getLocatieActiviteiten"
+      parameters:
+        - name: "identificatie"
+          in: "path"
+          required: true
+          style: "simple"
+          explode: false
+          schema:
+            type: "string"
+          example: "nl.imow-gm0000.gebied.test"
+      responses:
+        200:
+          description: "Activiteiten"
+          content:
+            application/hal+json:
+              schema:
+                required:
+                  - "_embedded"
+                  - "_links"
+                  - "page"
+                type: "object"
+                properties:
+                  _embedded:
+                    required:
+                      - "activiteiten"
+                    type: "object"
+                    properties:
+                      activiteiten:
+                        type: "array"
+                        items:
+                          $ref: "#/components/schemas/Activiteit"
+                  _links:
+                    $ref: "#/components/schemas/HalPaginationLinks"
+                  page:
+                    $ref: "#/components/schemas/Page"
+          headers:
+            X-Total-Count:
+              $ref: "#/components/headers/X-Total-Count"
+            X-Pagination-Count:
+              $ref: "#/components/headers/X-Pagination-Count"
+            X-Pagination-Page:
+              $ref: "#/components/headers/X-Pagination-Page"
+            X-Pagination-Limit:
+              $ref: "#/components/headers/X-Pagination-Limit"
+        404:
+          $ref: "#/components/responses/NotFound"
+        default:
+          description: "Onverwacht probleem"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+
+components:
+  schemas:
+    JuridischeRegel:
+      title: "Juridische regel"
+      description: "De beschrijving van een regel met juridische werkingskracht. Een regel betreft binnen de Omgevingswet veelal activiteiten  en/of normen en/of gebiedsaanwijzingen. "
+      type: "object"
+      required:
+        - "omschrijving"
+        - "idealisatie"
+        - "definieert"
+        - "_links"
+      properties:
+        omschrijving:
+          title: "omschrijving"
+          description: "??n doorlopend stuk juridische tekst  van een artikel of een lid  die omschrijvingen van (een of meer) juridische regels bevat. "
+          type: "string"
+        thema:
+          title: "thema"
+          description: "Kernachtige weergave van de grondgedachte achter een regel. Een thema kent geen locatie."
+          type: "array"
+          items:
+            $ref: "#/components/schemas/Thema"
+          minItems: 0
+        idealisatie:
+          title: "idealisatie"
+          description: "Vastlegging van de manier de begrenzing van Locatie voor deze Juridische regel ge?nterpreteerd moet worden en door het bevoegd gezag bedoeld is."
+          $ref: "#/components/schemas/Idealisatie"
+        definieert:
+          title: "definieert"
+          description: "Een Juridische regel definieert een locatie  die bestaansrecht heeft doordat de regel ernaar verwijst. De locatie begrenst de werking van de regel in juridische zin  te weten dat deze regel alleen voor deze locatie werkingskracht heeft. "
+          type: "array"
+          items:
+            $ref: "#/components/schemas/Locatie"
+        _links:
+          required:
+            - "isOpgenomenIn"
+          type: "object"
+          properties:
+            beschrijftEenActiviteit:
+              $ref: "#/components/schemas/HalLink"
+            beschrijftEenOmgevingsnorm:
+              $ref: "#/components/schemas/HalLink"
+            beschrijftEenOmgevingswaarde:
+              $ref: "#/components/schemas/HalLink"
+            beschrijftEenGebiedsaanwijzing:
+              $ref: "#/components/schemas/HalLink"
+            isOpgenomenIn:
+              $ref: "#/components/schemas/HalLink"
+            heeftAlsWerkingsgebied:
+              $ref: "#/components/schemas/HalLink"
+
+    Idealisatie:
+      title: "Idealisatie"
+      description: "Een lijst met een opsomming van de mogelijke domeinwaarden van een attribuutsoort, die buiten het model in een externe waardenlijst worden beheerd. "
+      properties:
+        code:
+          type: "string"
+        waarde:
+          type: "string"
+
+    Regeltekst:
+      title: "Regeltekst"
+      description: "Regeltekst is de kleinste zelfstandig beheerde eenheid van bij elkaar horende Juridische regels in een tekst met artikelstructuur  zijnde een artikel of lid. "
+      type: "object"
+      required:
+        - "identificatie"
+        - "omschrijving"
+        - "heeftWerkingIn"
+        - "_links"
+      properties:
+        identificatie:
+          title: "identificatie"
+          description: "De unieke identificatie waaronder elk object van dit type bekend is."
+          $ref: "#/components/schemas/Identificatie"
+        omschrijving:
+          title: "omschrijving"
+          description: "De letterlijke tekst waarmee de Regeltekst is omschreven  in een artikel of een lid. Een Regeltekst is altijd ??n doorlopend stuk juridische tekst  welke juridische regels bevat. "
+          type: "string"
+
+        thema:
+          title: "thema"
+          description: "Is afgeleid van  en altijd gelijk aan  de regels die zijn opgenomen in de regeltekst. "
+          type: "array"
+          items:
+            $ref: "#/components/schemas/Thema"
+          minItems: 0
+        heeftWerkingIn:
+          title: "heeft werking in"
+          description: "Het werkingsgebied c.q. de locatie begrensd de juridische werking van de regeltekst  in juridische zin  te weten dat deze regeltekst alleen binnen dit werkingsgebied juridische werkingskracht heeft."
+          type: "array"
+          items:
+            $ref: "#/components/schemas/Locatie"
+  # Hier is de relatie naar locatie opgenomen als property (en dus platgeslagen). Als locatie een zelfstandige resource wordt neem je deze op in de links.
+        documentIdentificatie:
+          type: "string"
+        nummer:
+          title: "nummer"
+          type: "string"
+        opschrift:
+          title: "opschrift"
+          type: "string"
+        typeJuridischeRegels:
+          title: "typeJuridischeRegels"
+          type: "string"
+        juridischeRegels:
+          title: "juridischeRegels"
+          type: "array"
+          items:
+            $ref: "#/components/schemas/JuridischeRegel"
+  # JuridischeRegels is een resource. Het zou veel prettiger zijn deze niet op te nemen in de resource als property, maar op te nemen in de
+  # _links. Je hoeft dan alleen de link naar de juridischeRegel op te nemen.
+        _links:
+          required:
+          - "self"
+          type: "object"
+          properties:
+            self:
+              $ref: "#/components/schemas/HalLink"
+            definieert:
+              $ref: "#/components/schemas/HalLink"
+            gerelateerd:
+              $ref: "#/components/schemas/HalLink"
+
+    Locatie:
+      title: "Locatie"
+      description: "De locatie beschrijft de ruimtelijke dimensie of ruimtelijke afbakening van een regel of van een objecttype die in de regel beschreven wordt. ; Een locatie is veelal een Gebied of een Gebiedengroep  maar kan ook zijn een Punt of een Lijn of een Puntengroep of een Lijnengroep"
+      type: "object"
+      required:
+        - "identificatie"
+        - "_links"
+      properties:
+        identificatie:
+          title: "identificatie"
+          description: "De unieke identificatie waaronder elk object van dit type bekend is."
+          $ref: "#/components/schemas/Identificatie"
+        noemer:
+          title: "noemer"
+          description: "Tekstuele beschrijving van een Locatie  zodat er als zodanig over deze locatie gesproken kan worden. De beschrijving kan een bepaalde naam zijn waaronder de Locatie bekend staat  maar (lang) niet elke Locatie heef een naam."
+          type: "string"
+        locatieType:
+          type: "string"
+        _links:
+          required:
+          - "self"
+          type: "object"
+          properties:
+            self:
+              $ref: "#/components/schemas/HalLink"
+
+    Activiteit:
+      title: "Activiteit"
+      description: "Een activiteit is ieder menselijk handelen waarbij  of ieder menselijk nalaten waardoor een verandering of effect in de fysieke leefomgeving wordt of kan worden bewerkstelligd. "
+      type: "object"
+      required:
+        - "identificatie"
+        - "naam"
+        - "groep"
+        - "_links"
+      properties:
+        identificatie:
+          title: "identificatie"
+          description: "De unieke identificatie waaronder elk object van dit type bekend is. "
+          $ref: "#/components/schemas/Identificatie"
+        naam:
+          title: "naam"
+          description: "Een (korte) omschrijving van de activiteit."
+          type: "string"
+        groep:
+          title: "groep"
+          description: "Een categorie  of groep  waaronder een activiteit valt. "
+          $ref: "#/components/schemas/Activiteitengroep"
+        documentIdentificatie:
+          type: "string"
+        _links:
+          required:
+            - "self"
+            - "isVerbondenMet"
+            - "is"
+          type: "object"
+          properties:
+            self:
+              $ref: "#/components/schemas/HalLink"
+            beschrevenIn:
+              $ref: "#/components/schemas/HalLink"
+            isVerbondenMet:
+              $ref: "#/components/schemas/HalLink"
+            is:
+              $ref: "#/components/schemas/HalLink"
+            gerelateerd:
+              $ref: "#/components/schemas/HalLink"
+
+    Activiteitengroep:
+      title: "Activiteitengroep"
+      description: "Een uitbreidbare lijst met een opsomming van de mogelijke domeinwaarden van een attribuutsoort  die buiten het model in een externe waardenlijst worden beheerd. "
+      properties:
+        code:
+          type: "string"
+        waarde:
+          type: "string"
+
+    Thema:
+      title: "Thema"
+      description: "Een limitatieve lijst met een opsomming van de mogelijke domeinwaarden van een attribuutsoort  die buiten het model in een externe waardenlijst worden beheerd. "
+      properties:
+        code:
+          type: "string"
+        waarde:
+          type: "string"
+
+    Identificatie:
+      title: "Identificatie"
+      description: "Identificatiegegevens voor de universeel unieke identificatie van een object."
+      type: "string"
+
+    HalLink:
+      description: "HAL link."
+      type: "object"
+      required:
+        - "href"
+      properties:
+        href:
+          type: "string"
+
+    Page:
+      description: "Info voor paginering"
+      type: "object"
+      required:
+        - "size"
+        - "totalElements"
+        - "totalPages"
+        - "number"
+      properties:
+        size:
+          type: "integer"
+          format: "int32"
+          example: 20
+
+        totalElements:
+          type: "integer"
+          format: "int32"
+          example: 1
+
+        totalPages:
+          type: "integer"
+          format: "int32"
+          example: 1
+
+        number:
+          type: "integer"
+          format: "int32"
+          example: 0
+
+    Problem:
+      description: "Standaardformaat (`application/problem+json`) voor probleemdetails in HTTP API's (RFC 7807)."
+      type: "object"
+      properties:
+        type:
+          type: "string"
+          format: "uri"
+          description: "Absolute URI dat het probleemtype identificeert. "
+          default: "about:blank"
+        title:
+          type: "string"
+          description: "Een korte samenvatting van het probleemtype bedoeld voor ontwikkelaars. "
+        status:
+          type: "integer"
+          format: "int32"
+          description: "De HTTP statuscode gegenereerd door de server waar het probleem zich voordoet. "
+          minimum: 100
+          maximum: 600
+          exclusiveMaximum: true
+          example: 503
+        detail:
+          type: "string"
+          description: "Mens-leesbare uitleg van dit specifieke probleem. "
+          example: "Geen verbinding met de database"
+        instance:
+          type: "string"
+          format: "uri"
+          description: "Absolute URI dat dit specifieke probleem identificeert. "
+
+    HalCollectionLinks:
+      type: "object"
+      properties:
+        self:
+          type: "object"
+          properties:
+            href:
+              $ref: "#/components/schemas/Href"
+          description: "uri van de api aanroep die tot dit resultaat heeft geleid"
+
+    HalPaginationLinks:
+      allOf:
+        - $ref: "#/components/schemas/HalCollectionLinks"
+        - properties:
+            first:
+              type: "object"
+              properties:
+                href:
+                  $ref: "#/components/schemas/Href"
+
+                title:
+                  type: "string"
+                  example: "Eerste pagina"
+              description: "uri voor het opvragen van de eerste pagina van deze collectie"
+            last:
+              type: "object"
+              properties:
+                href:
+                  $ref: "#/components/schemas/Href"
+                title:
+                  type: "string"
+                  example: "Laatste pagina"
+              description: "uri voor het opvragen van de laatste pagina van deze collectie"
+            prev:
+              type: "object"
+              properties:
+                href:
+                  $ref: "#/components/schemas/Href"
+                title:
+                  type: "string"
+                  example: "Vorige pagina"
+              description: "uri voor het opvragen van de vorige pagina van deze collectie"
+            next:
+              type: "object"
+              properties:
+                href:
+                 $ref: "#/components/schemas/Href"
+                title:
+                  type: "string"
+                  example: "Volgende pagina"
+              description: "uri voor het opvragen van de volgende pagina van deze collectie"
+
+    Href:
+      type: "string"
+      format: "uri"
+      example: "datapunt.voorbeeldgemeente.nl/api/resourcename/123456789"
+
+  headers:
+    X-Total-Count:
+      description: "Totaal aantal objecten."
+      required: false
+      schema:
+        type: "integer"
+        example: 100
+
+    X-Pagination-Count:
+      description: "Totaal aantal pagina's."
+      required: false
+      schema:
+        type: "integer"
+        example: 3
+
+    X-Pagination-Page:
+      description: "Huidige pagina."
+      required: false
+      schema:
+        type: "integer"
+        example: 1
+
+    X-Pagination-Limit:
+      description: "Objecten per pagina."
+      required: false
+      schema:
+        type: "integer"
+        example: 3
+
+  responses:
+    NotFound:
+      description: "Not found"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+
+    BadRequest:
+      description: "Bad request"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+
+    NotAcceptable:
+      description: "Not acceptable"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+
+    PreconditionFailed:
+      description: "Precondition failed"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
